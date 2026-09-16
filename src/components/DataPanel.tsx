@@ -262,8 +262,8 @@ export function DataPanel({ estado, destaque, pilha, saida }: DataPanelProps) {
   }
 
   return (
-    <section aria-label="Dados intermediários" className="flex min-h-0 min-w-0 flex-col gap-3">
-      <div id={`${prefixo}-painel`} role="tabpanel" aria-labelledby={`${prefixo}-aba-${ativa}`} className="max-h-[42vh] min-h-0 overflow-auto">
+    <section aria-label="Dados intermediários" className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+      <div id={`${prefixo}-painel`} role="tabpanel" aria-labelledby={`${prefixo}-aba-${ativa}`} className="max-h-[42vh] min-h-0 flex-1 overflow-auto md:max-h-none">
         {conteudo}
       </div>
 

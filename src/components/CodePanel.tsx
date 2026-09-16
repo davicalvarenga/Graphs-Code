@@ -73,7 +73,7 @@ export function CodePanel({ linha, pilha }: CodePanelProps) {
   const locais = Object.entries(topo?.locais ?? {});
 
   return (
-    <section aria-label="Código C" className="flex min-h-0 min-w-0 flex-col gap-3">
+    <section aria-label="Código C" className="flex min-h-0 min-w-0 shrink-0 flex-col gap-3">
       <p className="font-mono text-xs text-neutral-700">
         <span className="text-acento-700">{topo?.fn ?? 'main'}</span> · linha {linha}
       </p>

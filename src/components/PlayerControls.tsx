@@ -52,7 +52,7 @@ export function PlayerControls(props: PlayerControlsProps) {
   const ultimo = total - 1;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-divisor px-5 pb-6 pt-4 md:px-14">
+    <div className="flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-divisor px-5 pb-6 pt-4 md:px-14 baixa:pb-3 baixa:pt-3">
       <button type="button" className="btn btn-primario min-w-[118px]" onClick={props.onAlternar} aria-label={tocando ? 'Pausar' : 'Executar'} title="Play/pausa (espaço)">
         {tocando ? 'Pausar' : 'Play'}
       </button>

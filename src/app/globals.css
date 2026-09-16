@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Janela larga porém baixa (ex.: notebook 1366×768 com as barras do navegador): a execução compacta os espaçamentos para caber sem rolagem. */
+@custom-variant baixa (@media (width >= 48rem) and (height < 760px));
+
 /*
  * Design system Modernist: fundo claro, tinta quase preta, um único acento
  * vermelho, cantos retos e réguas de 2px. Os tokens abaixo vêm de

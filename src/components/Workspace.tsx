@@ -92,7 +92,8 @@ export function Workspace({ trace, onNovaEntrada }: WorkspaceProps) {
   const modulo: Modulo = passo.modulo;
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    // A partir de md a execução ocupa exatamente a janela: só o grafo encolhe e o painel lateral rola por dentro.
+    <div className="flex min-h-dvh flex-col md:h-dvh md:overflow-hidden">
       <Cabecalho situacao={`passo ${player.indice + 1} de ${visiveis.length} · ${NOME_MODULO[modulo]}`} onAlterarEntrada={onNovaEntrada} />
 
       {trace.nivelGravado < 3 ? (
@@ -102,51 +103,56 @@ export function Workspace({ trace, onNovaEntrada }: WorkspaceProps) {
       ) : null}
 
       {erro ? (
-        <section role="alert" className="px-5 pt-10 md:px-14">
-          <p className="font-mono text-[13px] text-neutral-700">o programa parou no passo {player.indice + 1}</p>
-          <h2 className="mt-3 max-w-[30ch] text-[26px] md:text-[28px]">
-            <Nota nota={erro} />
-          </h2>
-          <p className="mt-4 max-w-[46ch] text-[15px] leading-relaxed text-neutral-900">{passo.nota}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-6">
-            <button type="button" className="btn btn-primario" onClick={() => ir(0)}>
-              Rever do início
-            </button>
-            <button type="button" className="btn btn-texto" onClick={onNovaEntrada}>
-              voltar à entrada
-            </button>
+        <section role="alert" className="flex-none px-5 pt-10 md:px-14 md:pt-6 baixa:pt-3">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+            <h2 className="max-w-[30ch] text-[26px] md:text-[28px] baixa:text-[22px]">
+              <Nota nota={erro} />
+            </h2>
+            <div className="flex flex-wrap items-center gap-6">
+              <button type="button" className="btn btn-primario" onClick={() => ir(0)}>
+                Rever do início
+              </button>
+              <button type="button" className="btn btn-texto" onClick={onNovaEntrada}>
+                voltar à entrada
+              </button>
+            </div>
           </div>
+          <p className="mt-2 max-w-[80ch] text-[15px] leading-relaxed text-neutral-900">
+            {passo.nota} <span className="font-mono text-[13px] text-neutral-700">o programa parou no passo {player.indice + 1}</span>
+          </p>
         </section>
       ) : terminou ? (
-        <section role="status" className="px-5 pt-10 md:px-14">
-          <p className="font-mono text-[13px] text-neutral-700">
-            passo {visiveis.length} de {visiveis.length} · return {trace.exitCode}
-          </p>
-          <h2 className="mt-3 max-w-[24ch] text-[26px] md:text-[28px]">O programa terminou.</h2>
-          <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-neutral-900">{resumoFinal(passo.estado)}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-6">
-            <button type="button" className="btn btn-primario" onClick={() => ir(0)}>
-              Rever do início
-            </button>
-            <button type="button" className="btn btn-texto" onClick={onNovaEntrada}>
-              nova entrada
-            </button>
+        // Título e botões na mesma linha: a tela final não pode roubar a altura do grafo e do painel lateral.
+        <section role="status" className="flex-none px-5 pt-10 md:px-14 md:pt-6 baixa:pt-3">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+            <h2 className="text-[26px] md:text-[28px] baixa:text-[22px]">O programa terminou.</h2>
+            <div className="flex flex-wrap items-center gap-6">
+              <button type="button" className="btn btn-primario" onClick={() => ir(0)}>
+                Rever do início
+              </button>
+              <button type="button" className="btn btn-texto" onClick={onNovaEntrada}>
+                nova entrada
+              </button>
+            </div>
           </div>
+          <p className="mt-2 max-w-[80ch] text-[15px] leading-relaxed text-neutral-900">
+            {resumoFinal(passo.estado)} <span className="font-mono text-[13px] text-neutral-700">return {trace.exitCode}</span>
+          </p>
         </section>
       ) : (
-        <p className="max-w-[34ch] px-5 pt-10 font-titulo text-[26px] font-extrabold leading-[1.22] tracking-[-0.02em] md:px-14 md:pt-11 md:text-[34px]">
+        <p className="max-w-[34ch] flex-none px-5 pt-10 font-titulo text-[26px] font-extrabold leading-[1.22] tracking-[-0.02em] md:px-14 md:pt-8 md:text-[34px] baixa:pt-3 baixa:text-[24px]">
           <Nota nota={passo.nota} />
         </p>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-10 px-5 pt-7 md:flex-row md:gap-14 md:px-14">
-        <div className="h-[300px] min-w-0 flex-1 md:h-[420px]">
+      <div className="flex min-h-0 flex-1 flex-col gap-10 px-5 pt-7 md:flex-row md:gap-14 md:px-14 baixa:pt-3">
+        <div className="h-[300px] min-w-0 flex-1 md:h-auto md:min-h-0">
           <ErrorBoundary area="o grafo">
             <GraphView estado={passo.estado} destaque={passo.destaque} rodape={`${passo.estado.v} vértice(s)`} />
           </ErrorBoundary>
         </div>
 
-        <aside className="flex w-full min-w-0 flex-col gap-8 pb-4 md:w-[330px] md:flex-none">
+        <aside className="flex w-full min-w-0 flex-col gap-8 pb-4 md:min-h-0 md:w-[330px] md:flex-none lg:w-[400px] md:overflow-y-auto">
           <ErrorBoundary area="o código">
             <CodePanel linha={passo.linha} pilha={passo.pilha} />
           </ErrorBoundary>
