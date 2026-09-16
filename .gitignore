@@ -7,4 +7,5 @@ next-env.d.ts
 .env*
 tests/golden/.bin/
 .DS_Store
-.claude/
+.claude/*
+!.claude/launch.json
