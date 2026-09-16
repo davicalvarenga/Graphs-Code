@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Código C exibido sincronizado com grafos.c
+        run: |
+          npm run gen:source
+          git diff --exit-code src/c-source/grafos.generated.ts
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Testes (falha se a cobertura ficar abaixo de 80%)
+        run: npm run test:coverage -- --ci
+      - run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-estatico
+          path: out/
+          retention-days: 7

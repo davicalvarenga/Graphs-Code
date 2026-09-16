@@ -1,0 +1,224 @@
+@import 'tailwindcss';
+
+/*
+ * Design system Modernist: fundo claro, tinta quase preta, um único acento
+ * vermelho, cantos retos e réguas de 2px. Os tokens abaixo vêm de
+ * _ds/modernist/styles.css; as cores semânticas da execução são a única
+ * extensão (o sistema é monocromático, mas a visualização precisa distinguir
+ * "em execução", "comparado", "aceito" e "rejeitado").
+ */
+@theme {
+  --color-fundo: #f3f2f2;
+  --color-superficie: #eae9e9;
+  --color-tinta: #201e1d;
+  --color-divisor: #bab6b6;
+
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-300: #d7d3d3;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #7d7979;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
+
+  --color-acento: #ec3013;
+  --color-acento-100: #fff2ef;
+  --color-acento-200: #ffe0d9;
+  --color-acento-300: #ffc4b8;
+  --color-acento-400: #ff9783;
+  --color-acento-500: #ff563c;
+  --color-acento-600: #dd2b0f;
+  --color-acento-700: #ae1800;
+  --color-acento-800: #7c1405;
+  --color-acento-900: #4d170e;
+
+  --color-atual: #ec3013;
+  --color-comparado: #7d7979;
+  --color-sucesso: #2f6b4f;
+  --color-falha: #ae1800;
+  --color-particao-x: #201e1d;
+  --color-particao-y: #ec3013;
+  --color-visitado: #d7d3d3;
+
+  --font-titulo: var(--fonte-archivo), 'Archivo', system-ui, sans-serif;
+  --font-sans: var(--fonte-archivo), 'Archivo', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  --radius-none: 0px;
+}
+
+/* Sem ligaduras: `->`, `!=` e `>=` aparecem exatamente como no código C. */
+code,
+pre,
+.font-mono {
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+body {
+  background: var(--color-fundo);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-titulo);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
+}
+::selection {
+  background: var(--color-acento-200);
+}
+
+@layer components {
+  /* Rótulos sempre alinhados à esquerda, cantos retos: regra do Modernist. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-start;
+    border: 0;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: left;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-primario {
+    background: var(--color-acento);
+    color: #fff;
+    padding: 12px 22px;
+    font-size: 14px;
+  }
+  .btn-primario:hover:not(:disabled) {
+    background: var(--color-acento-600);
+  }
+  .btn-primario:active:not(:disabled) {
+    background: var(--color-acento-700);
+  }
+
+  .btn-secundario {
+    background: transparent;
+    color: var(--color-tinta);
+    border: 1px solid var(--color-divisor);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .btn-secundario:hover:not(:disabled) {
+    border-color: var(--color-tinta);
+  }
+  .btn-secundario:active:not(:disabled) {
+    background: var(--color-neutral-200);
+  }
+
+  .btn-texto {
+    background: transparent;
+    color: var(--color-neutral-800);
+    padding: 2px 0;
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .btn-texto:hover:not(:disabled) {
+    color: var(--color-acento-700);
+  }
+
+  /* Campos sem caixa: só a régua embaixo. */
+  .campo-linha {
+    border: 0;
+    border-bottom: 2px solid var(--color-tinta);
+    background: transparent;
+    padding: 4px 0;
+    color: inherit;
+  }
+  .campo-linha:focus-visible {
+    border-bottom-color: var(--color-acento);
+    outline: none;
+  }
+
+  .selecao-discreta {
+    border: 0;
+    border-bottom: 1px solid var(--color-divisor);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    padding: 2px 0;
+  }
+
+  /* Barra de progresso: régua de 2px com marcador redondo no acento. */
+  .regua-progresso {
+    appearance: none;
+    width: 100%;
+    height: 10px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .regua-progresso::-webkit-slider-runnable-track {
+    height: 2px;
+    background: var(--color-neutral-400);
+  }
+  .regua-progresso::-moz-range-track {
+    height: 2px;
+    background: var(--color-neutral-400);
+  }
+  .regua-progresso::-moz-range-progress {
+    height: 2px;
+    background: var(--color-tinta);
+  }
+  .regua-progresso::-webkit-slider-thumb {
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    margin-top: -4px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-acento);
+  }
+  .regua-progresso::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-acento);
+  }
+}
+
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.linha-ativa {
+  animation: pulso 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linha-ativa {
+    animation: none;
+  }
+}

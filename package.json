@@ -1,0 +1,48 @@
+{
+  "name": "app-grafos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Visualizador educativo que executa, linha a linha, um programa C de grafos.",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "npx serve out",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "golden": "node scripts/gen-golden.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage && npm run build",
+    "gen:source": "node scripts/gen-source.mjs"
+  },
+  "dependencies": {
+    "d3-selection": "3.0.0",
+    "d3-zoom": "3.0.0",
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/d3-selection": "3.0.12",
+    "@types/d3-zoom": "3.0.8",
+    "@types/jest": "30.0.0",
+    "@types/node": "22.20.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "jest": "30.5.1",
+    "jest-environment-jsdom": "30.5.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3"
+  },
+  "type": "module"
+}
