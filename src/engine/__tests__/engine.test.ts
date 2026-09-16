@@ -156,7 +156,8 @@ describe('buildTrace', () => {
     expect(ultimoEstado(k4.trace).resultados).toMatchObject({ completo: true, roda: true, centro: 3, euleriano: 'nao' });
     expect(ultimoEstado(k4.trace).resultados.cliques).toEqual([{ membros: [0, 1, 2, 3], tamanho: 4 }]);
     expect(ultimoEstado(k4.trace).liberado).toBe(true);
-    expect(ultimoEstado(k4.trace).lista).toEqual([[], [], [], []]);
+    // liberarGrafo só destaca os nós: as listas continuam visíveis no fim.
+    expect(ultimoEstado(k4.trace).lista).toEqual([[1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2]]);
   });
 
   it('erros do programa são passos do trace com exitCode 1', () => {

@@ -3,7 +3,7 @@ import { moduloClassificacao } from './classificacao';
 import { moduloCliques } from './cliques';
 import { moduloEntrada } from './entrada';
 import { paraStdin, type EntradaPrograma } from './exemplos';
-import { comItem, InvarianteError, LimiteDePassosError, Recorder } from './recorder';
+import { InvarianteError, LimiteDePassosError, Recorder } from './recorder';
 import { Stdin } from './scanf';
 import { moduloTransformacoes } from './transformacoes';
 import type { Nivel, ResultadoTrace, Trace } from './types';
@@ -40,10 +40,11 @@ function liberarGrafo(rec: Recorder): void {
   for (let i = 0; i < v; i++) {
     rec.local({ i });
     rec.passo(2, LG.linhas, `Libera as linhas ${i} das matrizes de incidência e adjacência.`, { vertices: [{ id: i, tipo: 'atual' }] });
-    const tamanho = rec.estado.lista?.[i]?.length ?? 0;
-    for (let n = 0; n < tamanho; n++) {
-      rec.mutar((g) => ({ ...g, lista: comItem(g.lista ?? [], i, (g.lista?.[i] ?? []).slice(1)) }));
-      rec.passo(3, LG.no, `free(aux): remove a cabeça da lista de ${i}.`, { vertices: [{ id: i, tipo: 'atual' }] });
+    const vizinhos = rec.estado.lista?.[i] ?? [];
+    // Os nós são só destacados, não removidos: o painel final continua mostrando as listas,
+    // como já acontece com as matrizes e os graus.
+    for (let n = 0; n < vizinhos.length; n++) {
+      rec.passo(3, LG.no, `free(aux): libera o nó ${vizinhos[n]} da lista de ${i}.`, { vertices: [{ id: i, tipo: 'atual' }], no: { u: i, indice: n } });
     }
   }
   rec.mutar((g) => ({ ...g, liberado: true }));
