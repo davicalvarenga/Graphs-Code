@@ -93,7 +93,7 @@ export function Workspace({ trace, onNovaEntrada }: WorkspaceProps) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Cabecalho situacao={`passo ${player.indice + 1} de ${visiveis.length} · ${NOME_MODULO[modulo]}`} />
+      <Cabecalho situacao={`passo ${player.indice + 1} de ${visiveis.length} · ${NOME_MODULO[modulo]}`} onAlterarEntrada={onNovaEntrada} />
 
       {trace.nivelGravado < 3 ? (
         <p className="border-b border-divisor px-5 py-2 text-[13px] text-acento-700 md:px-14">
