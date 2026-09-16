@@ -12,6 +12,8 @@ export interface Exemplo {
   nome: string;
   descricao: string;
   entrada: EntradaPrograma;
+  /** Entrada propositalmente inválida, para mostrar a validação do programa C. */
+  invalido?: true;
 }
 
 /** Monta o texto da matriz de incidência (uma linha por vértice) a partir de uma lista de arestas. */
@@ -83,25 +85,29 @@ export const EXEMPLOS: readonly Exemplo[] = [
   },
   {
     id: 'erro-paralelas',
-    nome: 'Erro: paralelas',
+    nome: 'arestas paralelas',
+    invalido: true,
     descricao: 'As colunas e0 e e2 são idênticas.',
     entrada: { vertices: '3', arestas: '3', matriz: '1 0 1\n1 1 1\n0 1 0' },
   },
   {
     id: 'erro-coluna',
-    nome: 'Erro: coluna com 3',
+    nome: 'aresta com 3 vértices',
+    invalido: true,
     descricao: 'A aresta e1 incide em três vértices.',
     entrada: { vertices: '3', arestas: '2', matriz: '1 1\n1 1\n0 1' },
   },
   {
     id: 'erro-valor',
-    nome: 'Erro: valor 2',
+    nome: 'valor 2 na matriz',
+    invalido: true,
     descricao: 'A matriz só aceita 0 ou 1.',
     entrada: { vertices: '2', arestas: '1', matriz: '1\n2' },
   },
   {
     id: 'erro-vertices',
-    nome: 'Erro: 21 vértices',
+    nome: '21 vértices',
+    invalido: true,
     descricao: 'Fora do intervalo 1..20.',
     entrada: { vertices: '21', arestas: '0', matriz: '' },
   },

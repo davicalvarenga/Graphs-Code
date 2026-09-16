@@ -2,13 +2,41 @@
 
 import { useId, type FormEvent } from 'react';
 import { avisosDeEntrada } from '@/engine/avisos';
-import { EXEMPLOS, type EntradaPrograma } from '@/engine/exemplos';
+import { EXEMPLOS, type EntradaPrograma, type Exemplo } from '@/engine/exemplos';
 import { previaDaEntrada } from '@/engine/previa';
 import { MAX_CARACTERES_ENTRADA } from '@/engine/programa';
 import { GraphView } from './GraphView';
 
 function mesmaEntrada(a: EntradaPrograma, b: EntradaPrograma): boolean {
   return a.vertices === b.vertices && a.arestas === b.arestas && a.matriz === b.matriz;
+}
+
+const GRAFOS = EXEMPLOS.filter((exemplo) => !exemplo.invalido);
+const INVALIDOS = EXEMPLOS.filter((exemplo) => exemplo.invalido);
+
+interface ListaDeExemplosProps {
+  exemplos: readonly Exemplo[];
+  entrada: EntradaPrograma;
+  onChange: (entrada: EntradaPrograma) => void;
+}
+
+/** Botões de exemplo separados por vírgula, com o selecionado sublinhado no acento. */
+function ListaDeExemplos({ exemplos, entrada, onChange }: ListaDeExemplosProps) {
+  return exemplos.map((exemplo, indice) => (
+    <span key={exemplo.id}>
+      <button
+        type="button"
+        title={exemplo.descricao}
+        onClick={() => onChange(exemplo.entrada)}
+        className={`btn btn-texto text-[length:inherit] ${
+          mesmaEntrada(entrada, exemplo.entrada) ? 'border-b-2 border-acento font-semibold text-tinta' : 'border-b border-neutral-500 text-neutral-900'
+        }`}
+      >
+        {exemplo.nome}
+      </button>
+      {indice < exemplos.length - 1 ? ', ' : ''}
+    </span>
+  ));
 }
 
 interface InputPanelProps {
@@ -33,25 +61,11 @@ export function InputPanel({ entrada, onChange, onExecutar }: InputPanelProps) {
         <h1 className="max-w-[20ch] text-[34px] leading-[1.05] md:text-[46px]">Um grafo, e o programa em C que o lê.</h1>
 
         <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-neutral-900">
-          Comece por um exemplo —{' '}
-          {EXEMPLOS.map((exemplo, indice) => (
-            <span key={exemplo.id}>
-              <button
-                type="button"
-                title={exemplo.descricao}
-                onClick={() => onChange(exemplo.entrada)}
-                className={`btn btn-texto text-[17px] ${
-                  mesmaEntrada(entrada, exemplo.entrada)
-                    ? 'border-b-2 border-acento font-semibold text-tinta'
-                    : 'border-b border-neutral-500 text-neutral-900'
-                }`}
-              >
-                {exemplo.nome}
-              </button>
-              {indice < EXEMPLOS.length - 1 ? ', ' : ' '}
-            </span>
-          ))}
-          — ou digite a sua matriz.
+          Comece por um exemplo — <ListaDeExemplos exemplos={GRAFOS} entrada={entrada} onChange={onChange} /> — ou digite a sua matriz.
+        </p>
+        <p className="mt-3 max-w-[58ch] text-[15px] leading-relaxed text-neutral-700">
+          Para ver a validação do programa, tente uma entrada inválida:{' '}
+          <ListaDeExemplos exemplos={INVALIDOS} entrada={entrada} onChange={onChange} />.
         </p>
 
         <div className="mt-10 flex flex-wrap gap-10">

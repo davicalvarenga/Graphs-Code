@@ -46,8 +46,17 @@ describe('GraphLab (fluxo completo)', () => {
     expect(screen.getByRole('heading', { name: /Um grafo, e o programa em C que o lê\./ })).toBeInTheDocument();
   });
 
+  it('volta para a entrada no meio da execução, mantendo a matriz digitada', async () => {
+    const usuario = await executarExemplo('Completo K4');
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' });
+
+    await usuario.click(screen.getByRole('button', { name: 'alterar grafo' }));
+    expect(screen.getByRole('button', { name: 'Executar programa' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /matriz de incidência/ })).toHaveValue(EXEMPLOS.find((e) => e.nome === 'Completo K4')?.entrada.matriz);
+  });
+
   it('mostra o erro detectado pelo programa C e permite voltar à entrada', async () => {
-    const usuario = await executarExemplo('Erro: coluna com 3');
+    const usuario = await executarExemplo('aresta com 3 vértices');
     fireEvent.keyDown(document.body, { key: 'End' });
 
     const alerta = screen.getByRole('alert');
