@@ -4,7 +4,7 @@
   "private": true,
   "description": "Visualizador educativo que executa, linha a linha, um programa C de grafos.",
   "engines": {
-    "node": ">=20.9"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",

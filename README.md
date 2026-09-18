@@ -1,5 +1,9 @@
 # Grafos em C, passo a passo
 
+[![CI](https://github.com/davicalvarenga/Graphs-Code/actions/workflows/ci.yml/badge.svg)](https://github.com/davicalvarenga/Graphs-Code/actions/workflows/ci.yml) [![Deploy na Vercel](https://img.shields.io/badge/deploy-vercel-000?logo=vercel)](https://graphs-code.vercel.app)
+
+**Use online: [graphs-code.vercel.app](https://graphs-code.vercel.app)**
+
 Aplicação web educativa que executa, **linha a linha**, um programa C de grafos e sincroniza cada linha com:
 
 - o **grafo animado** (vértices e arestas destacados conforme são processados);
@@ -36,7 +40,7 @@ Os avisos em vermelho no formulário são dicas do app, **não** fazem parte do 
 
 ## Requisitos
 
-- Node.js ≥ 20.9 (CI usa Node 24)
+- Node.js 24 (a mesma versão do CI e da Vercel)
 - gcc — **opcional**, só para regenerar os casos golden
 
 ## Scripts
@@ -54,7 +58,9 @@ Os avisos em vermelho no formulário são dicas do app, **não** fazem parte do 
 
 ## Deploy
 
-`next.config.ts` usa `output: 'export'`: o build gera HTML/JS/CSS estáticos em `out/`, sem servidor. Publique a pasta em qualquer hospedagem estática (Vercel, Netlify, GitHub Pages, Nginx). Nenhum dado sai do navegador.
+`next.config.ts` usa `output: 'export'`: o build gera HTML/JS/CSS estáticos em `out/`, sem servidor. Nenhum dado sai do navegador.
+
+A versão pública roda na **Vercel** (https://graphs-code.vercel.app): cada push no `master` publica em produção e cada pull request ganha uma URL de pré-visualização. Para outra hospedagem estática (Netlify, GitHub Pages, Nginx), publique a pasta `out/` ou o `.zip` anexado a cada release.
 
 ## Estrutura
 
