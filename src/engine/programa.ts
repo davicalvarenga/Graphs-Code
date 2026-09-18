@@ -1,6 +1,7 @@
 import { lineOf } from '@/c-source/source';
 import { moduloClassificacao } from './classificacao';
 import { moduloCliques } from './cliques';
+import { moduloConectividade } from './conectividade';
 import { moduloEntrada } from './entrada';
 import { paraStdin, type EntradaPrograma } from './exemplos';
 import { InvarianteError, LimiteDePassosError, Recorder } from './recorder';
@@ -16,6 +17,7 @@ const MAIN = {
   transformacoes: lineOf('main', 'moduloTransformacoes(&g);'),
   classificacao: lineOf('main', 'moduloClassificacao(&g);'),
   cliques: lineOf('main', 'moduloCliques(&g);'),
+  conectividade: lineOf('main', 'moduloConectividade(&g);'),
   libera: lineOf('main', 'liberarGrafo(&g);', 2),
   sucesso: lineOf('main', 'return 0;'),
 };
@@ -78,6 +80,10 @@ export function executar(stdin: string, nivel: Nivel | 0, limite = Number.POSITI
   rec.modulo = 'cliques';
   rec.passo(1, MAIN.cliques, 'Chama o módulo de cliques.');
   moduloCliques(rec);
+
+  rec.modulo = 'conectividade';
+  rec.passo(1, MAIN.conectividade, 'Chama o módulo de conectividade.');
+  moduloConectividade(rec);
 
   rec.modulo = 'fim';
   rec.passo(1, MAIN.libera, 'Libera a memória do grafo.');

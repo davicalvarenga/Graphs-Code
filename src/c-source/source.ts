@@ -1,4 +1,4 @@
-import { C_SOURCE } from './grafos.generated';
+import { C_SOURCE } from './grafos-geral.generated';
 
 export { C_SOURCE };
 
@@ -10,7 +10,7 @@ function inicioDaFuncao(fn: string): number {
   const assinatura = new RegExp(`^[A-Za-z_][\\w\\s*]*\\b${fn}\\s*\\(`);
   const indice = C_LINHAS.findIndex((linha) => assinatura.test(linha));
   if (indice === -1) {
-    throw new Error(`Função "${fn}" não encontrada em grafos.c`);
+    throw new Error(`Função "${fn}" não encontrada em grafos-geral.c`);
   }
   return indice;
 }
@@ -18,7 +18,7 @@ function inicioDaFuncao(fn: string): number {
 /**
  * Número (1-based) da linha que contém `trecho` dentro da função `fn`.
  * Resolve âncoras por conteúdo, e não por número fixo, para que o engine
- * continue correto se grafos.c for reformatado. Lança erro no carregamento
+ * continue correto se grafos-geral.c for reformatado. Lança erro no carregamento
  * do módulo caso a âncora deixe de existir.
  */
 export function lineOf(fn: string, trecho: string, ocorrencia = 1): number {

@@ -1,15 +1,17 @@
 'use client';
 
 import { useId, useState, type KeyboardEvent, type ReactNode } from 'react';
-import type { Destaque, EstadoGrafo, Frame, TipoDestaque } from '@/engine/types';
+import { potenciaDeA } from '@/engine/conectividade';
+import type { Destaque, EstadoGrafo, Frame, MatrizDestacavel, TipoDestaque } from '@/engine/types';
 
-export type Aba = 'incidencia' | 'adjacencia' | 'lista' | 'graus' | 'resultados' | 'saida';
+export type Aba = 'incidencia' | 'adjacencia' | 'lista' | 'graus' | 'conectividade' | 'resultados' | 'saida';
 
 const ABAS: ReadonlyArray<{ id: Aba; rotulo: string }> = [
   { id: 'incidencia', rotulo: 'incidência' },
   { id: 'adjacencia', rotulo: 'adjacência' },
   { id: 'lista', rotulo: 'lista' },
   { id: 'graus', rotulo: 'graus' },
+  { id: 'conectividade', rotulo: 'conectividade' },
   { id: 'resultados', rotulo: 'resultados' },
   { id: 'saida', rotulo: 'saída' },
 ];
@@ -36,6 +38,7 @@ const ABA_POR_FUNCAO: Readonly<Record<string, Aba>> = {
   detectarTriangulos: 'adjacencia',
   detectarCliquesVizinhanca: 'adjacencia',
   imprimirClique: 'resultados',
+  moduloConectividade: 'conectividade',
   liberarGrafo: 'saida',
   main: 'saida',
 };
@@ -105,7 +108,7 @@ function TabelaMatriz({ titulo, prefixoColuna, linhas, destaques }: MatrizProps)
   );
 }
 
-function celulasDe(destaque: Destaque, matriz: 'incidencia' | 'adjacencia'): Map<string, TipoDestaque> {
+function celulasDe(destaque: Destaque, matriz: MatrizDestacavel): Map<string, TipoDestaque> {
   return new Map((destaque.celulas ?? []).filter((c) => c.matriz === matriz).map((c) => [`${c.i},${c.j}`, c.tipo] as const));
 }
 
@@ -143,6 +146,7 @@ function Resultados({ estado }: { estado: EstadoGrafo }) {
         <Situacao rotulo="Ciclo" valor={r.ciclo} />
         <Situacao rotulo="Roda" valor={r.roda} detalhe={r.centro !== undefined ? `(centro ${r.centro})` : undefined} />
         <Situacao rotulo="Euleriano" valor={euleriano} detalhe={detalheEuleriano} />
+        <Situacao rotulo="Conexo" valor={r.conexo} />
         <Situacao
           rotulo="Bipartido"
           valor={r.bipartido === undefined ? undefined : r.bipartido !== false}
@@ -163,6 +167,38 @@ function Resultados({ estado }: { estado: EstadoGrafo }) {
       </div>
     </div>
   );
+}
+
+/** Matrizes locais de moduloConectividade enquanto executa; depois, só o S final. */
+function Conectividade({ estado, destaque }: { estado: EstadoGrafo; destaque: Destaque }) {
+  const c = estado.conectividade;
+  const { somaCaminhos, conexo } = estado.resultados;
+  if (!c) {
+    return somaCaminhos ? (
+      <div className="space-y-3">
+        <TabelaMatriz titulo="S = A + A² + … + Aⁿ⁻¹" prefixoColuna="v" linhas={somaCaminhos} destaques={new Map()} />
+        <p className="text-sm">
+          Conexo: <span className={conexo ? 'font-bold text-acento-700' : 'text-neutral-700'}>{conexo ? 'Sim' : 'Não'}</span>
+        </p>
+      </div>
+    ) : (
+      <Vazio>O módulo de conectividade ainda não foi executado.</Vazio>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <Rotulo>potencia · {potenciaDeA(c.r)}</Rotulo>
+      <TabelaMatriz titulo="potencia" prefixoColuna="v" linhas={c.potencia} destaques={celulasDe(destaque, 'potencia')} />
+      <Rotulo>proxima · {potenciaDeA(c.r + 1)} em construção</Rotulo>
+      <TabelaMatriz titulo="proxima" prefixoColuna="v" linhas={c.proxima} destaques={celulasDe(destaque, 'proxima')} />
+      <Rotulo>soma · S = A + … + {potenciaDeA(c.r)}</Rotulo>
+      <TabelaMatriz titulo="soma" prefixoColuna="v" linhas={c.soma} destaques={celulasDe(destaque, 'soma')} />
+    </div>
+  );
+}
+
+function Rotulo({ children }: { children: ReactNode }) {
+  return <h4 className="text-[11px] uppercase tracking-[0.12em] text-neutral-700">{children}</h4>;
 }
 
 interface DataPanelProps {
@@ -248,6 +284,9 @@ export function DataPanel({ estado, destaque, pilha, saida }: DataPanelProps) {
       ) : (
         <Vazio>O vetor de graus ainda não foi alocado.</Vazio>
       );
+      break;
+    case 'conectividade':
+      conteudo = <Conectividade estado={estado} destaque={destaque} />;
       break;
     case 'resultados':
       conteudo = <Resultados estado={estado} />;

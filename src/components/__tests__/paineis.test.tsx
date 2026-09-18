@@ -222,6 +222,8 @@ describe('DataPanel', () => {
     expect(screen.getByRole('list', { name: 'Vetor de graus' })).toHaveTextContent('grau[0] = 4');
 
     fireEvent.keyDown(screen.getByRole('tab', { name: 'graus' }), { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { name: 'conectividade' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'conectividade' }), { key: 'ArrowRight' });
     expect(screen.getByText(/Triângulos \(K₃\): 1/)).toBeInTheDocument();
     expect(screen.getByText('(centro 0)')).toBeInTheDocument();
 
@@ -247,7 +249,7 @@ describe('DataPanel', () => {
     render(<DataPanel estado={estado} destaque={{}} pilha={[{ fn: 'colorir', locais: {} }]} saida="" />);
     expect(screen.getByText('visitado[] (DFS)')).toBeInTheDocument();
     expect(screen.getByText(/\[2\] -1/)).toBeInTheDocument();
-    expect(screen.getAllByText('pendente')).toHaveLength(6);
+    expect(screen.getAllByText('pendente')).toHaveLength(7);
 
     for (const [aba, mensagem] of [
       ['incidência', 'A matriz de incidência ainda não foi alocada.'],
@@ -386,5 +388,52 @@ describe('ErrorBoundary', () => {
     expect(alerta).toHaveTextContent('Não foi possível exibir o grafo.');
     await usuario.click(within(alerta).getByRole('button', { name: 'tentar novamente' }));
     expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+});
+
+describe('DataPanel · conectividade', () => {
+  const trace = traceDoExemplo('roda-w5');
+
+  it('mostra potencia, proxima e soma enquanto o módulo executa', () => {
+    const passo = passoOnde(trace, (p) => p.pilha.at(-1)?.fn === 'moduloConectividade' && (p.destaque.celulas ?? []).some((c) => c.matriz === 'potencia'));
+    render(<DataPanel estado={passo.estado} destaque={passo.destaque} pilha={passo.pilha} saida="" />);
+
+    expect(screen.getByRole('tab', { name: 'conectividade' })).toHaveAttribute('aria-selected', 'true');
+    for (const nome of ['potencia', 'proxima', 'soma']) {
+      expect(screen.getByRole('table', { name: nome })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('table', { name: 'potencia' }).querySelectorAll('[data-destaque]').length).toBeGreaterThan(0);
+    expect(screen.getByRole('table', { name: 'proxima' }).querySelector('[data-destaque="atual"]')).not.toBeNull();
+  });
+
+  it('depois do módulo, mostra o S final e o veredito', async () => {
+    const usuario = userEvent.setup();
+    const final = trace.passos[trace.passos.length - 1];
+    if (!final) throw new Error('trace vazio');
+    render(<DataPanel estado={final.estado} destaque={{}} pilha={final.pilha} saida="" />);
+
+    await usuario.click(screen.getByRole('tab', { name: 'conectividade' }));
+    expect(screen.getByRole('table', { name: 'S = A + A² + … + Aⁿ⁻¹' })).toHaveTextContent('44');
+    expect(screen.getByText('Sim')).toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('tab', { name: 'resultados' }));
+    expect(screen.getByText('Conexo').nextElementSibling).toHaveTextContent('Sim');
+  });
+
+  it('avisa quando o módulo ainda não rodou', async () => {
+    const usuario = userEvent.setup();
+    render(<DataPanel estado={ESTADO_INICIAL} destaque={{}} pilha={[{ fn: 'main', locais: {} }]} saida="" />);
+    await usuario.click(screen.getByRole('tab', { name: 'conectividade' }));
+    expect(screen.getByText('O módulo de conectividade ainda não foi executado.')).toBeInTheDocument();
+  });
+
+  it('indica grafo não conexo no S final', async () => {
+    const usuario = userEvent.setup();
+    const separado = traceDoExemplo('desconexo');
+    const final = separado.passos[separado.passos.length - 1];
+    if (!final) throw new Error('trace vazio');
+    render(<DataPanel estado={final.estado} destaque={{}} pilha={final.pilha} saida="" />);
+    await usuario.click(screen.getByRole('tab', { name: 'conectividade' }));
+    expect(screen.getByText('Não')).toBeInTheDocument();
   });
 });

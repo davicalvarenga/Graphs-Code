@@ -415,6 +415,72 @@ void moduloCliques (struct Grafo *g) {
     detectarCliquesVizinhanca(g);
 }
 
+// ===================== Conectividade =====================
+
+// Teto para as contagens de caminhos, evita overflow em grafos densos.
+// Para saber se é conexo, só importa se o valor é zero ou positivo.
+#define LIMITE 1000000
+
+void moduloConectividade (struct Grafo *g) {
+    int n = g->v;
+    int potencia[n][n];  // A^r
+    int proxima[n][n];   // A^(r+1)
+    int soma[n][n];      // S = A + A^2 + ... + A^(n-1)
+
+    printf("\n===== CONECTIVIDADE =====\n");
+
+    // A^1 = A e S começa igual a A
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            potencia[i][j] = g->adjacencia[i][j];
+            soma[i][j] = g->adjacencia[i][j];
+        }
+    }
+
+    // A^r = A^(r-1) x A, para r = 2 até n-1
+    for (int r = 2; r <= n - 1; r++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                proxima[i][j] = 0;
+                for (int k = 0; k < n; k++) {
+                    proxima[i][j] += potencia[i][k] * g->adjacencia[k][j];
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                potencia[i][j] = (proxima[i][j] > LIMITE) ? LIMITE : proxima[i][j];
+                soma[i][j] += potencia[i][j];
+            }
+        }
+    }
+
+    printf("S = A + A^2 + ... + A^%d:\n", n - 1);
+    printf("    ");
+    for (int j = 0; j < n; j++) {
+        printf("v%-3d", j);
+    }
+    printf("\n");
+    for (int i = 0; i < n; i++) {
+        printf("v%-3d", i);
+        for (int j = 0; j < n; j++) {
+            printf("%-4d", soma[i][j]);
+        }
+        printf("\n");
+    }
+
+    // Conexo se existe caminho entre todo par de vértices distintos
+    bool conexo = true;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if(i != j && soma[i][j] == 0) {
+                conexo = false;
+            }
+        }
+    }
+    printf("\nConexo: %s\n", conexo ? "Sim" : "Não");
+}
+
 int main () {
     struct Grafo g = {0};
 
@@ -425,6 +491,7 @@ int main () {
     moduloTransformacoes(&g);
     moduloClassificacao(&g);
     moduloCliques(&g);
+    moduloConectividade(&g);
 
     liberarGrafo(&g);
     return 0;

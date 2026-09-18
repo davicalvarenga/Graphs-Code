@@ -6,7 +6,7 @@ Aplicação web educativa que executa, **linha a linha**, um programa C de grafo
 - as **estruturas de dados** (matriz de incidência, matriz de adjacência, lista de adjacência, graus, vetores `visitado[]`/`cor[]`, saída do `printf`);
 - a **pilha de chamadas** com as variáveis locais de cada função.
 
-O fluxo segue exatamente o `main()` original: entrada e validação → transformações → classificação (completo, ciclo, roda, euleriano, bipartido) → cliques (triângulos e `{u} ∪ N(u)`) → liberação da memória.
+O fluxo segue exatamente o `main()` original: entrada e validação → transformações → classificação (completo, ciclo, roda, euleriano, bipartido) → cliques (triângulos e `{u} ∪ N(u)`) → conectividade (`S = A + A² + … + Aⁿ⁻¹`) → liberação da memória.
 
 A saída do app é verificada contra o **binário C real** (compilado com gcc) em 72 casos — ver [Fidelidade ao C](docs/ARQUITETURA.md#fidelidade-ao-programa-c).
 
@@ -28,7 +28,8 @@ A interface segue o design system **Modernist**: fundo claro, tipografia Archivo
 - **Velocidade**: de 0,5× a máxima.
 - **Detalhe**: *toda linha* (cada linha executada), *iterações* (laços externos e mutações) ou *chamadas* (entradas, retornos e resultados).
 - **ver a função inteira**: troca a janela de cinco linhas pelo arquivo completo, numerado e com rolagem automática.
-- **seguir execução**: troca sozinho a estrutura exibida (incidência, adjacência, lista, graus, resultados, saída) conforme a função em execução.
+- **seguir execução**: troca sozinho a estrutura exibida (incidência, adjacência, lista, graus, conectividade, resultados, saída) conforme a função em execução.
+- **conectividade**: mostra as três matrizes locais do módulo — `potencia` (Aʳ), `proxima` (Aʳ⁺¹ sendo calculada) e `soma` (S) — com a célula e o vértice k da multiplicação destacados; no grafo, a aresta k–j que estende os caminhos.
 - Quando o programa para com erro ou termina, a frase dá lugar a uma tela com o que aconteceu e duas ações: rever do início ou voltar à entrada.
 
 Os avisos em vermelho no formulário são dicas do app, **não** fazem parte do programa C: a execução continua permitida para que o estudante veja como o C trata o erro.
@@ -48,8 +49,8 @@ Os avisos em vermelho no formulário são dicas do app, **não** fazem parte do 
 | `npm test` / `npm run test:coverage` | Jest + React Testing Library (limite mínimo de 80% de cobertura) |
 | `npm run lint` / `npm run typecheck` | ESLint e TypeScript estrito |
 | `npm run check` | Tudo acima, na ordem usada pelo CI |
-| `npm run gen:source` | Regenera `grafos.generated.ts` a partir de `src/c-source/grafos.c` |
-| `npm run golden` | Compila `grafos.c` com gcc e regrava `tests/golden/casos.json` |
+| `npm run gen:source` | Regenera `grafos-geral.generated.ts` a partir de `src/c-source/grafos-geral.c` |
+| `npm run golden` | Compila `grafos-geral.c` com gcc e regrava `tests/golden/casos.json` |
 
 ## Deploy
 
@@ -60,7 +61,7 @@ Os avisos em vermelho no formulário são dicas do app, **não** fazem parte do 
 ```
 src/
   app/          layout, página e fronteira de erro do Next.js
-  c-source/     grafos.c (fonte única), código gerado e resolução de linhas
+  c-source/     grafos-geral.c (fonte única), código gerado e resolução de linhas
   engine/       reimplementação instrumentada do programa C (sem React)
   hooks/        player e animação de posições
   components/   GraphLab, Workspace, GraphView, CodePanel, DataPanel, PlayerControls, InputPanel, Cabecalho, Nota

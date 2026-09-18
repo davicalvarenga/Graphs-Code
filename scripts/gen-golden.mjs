@@ -11,7 +11,7 @@ const binDir = join(raiz, 'tests', 'golden', '.bin');
 const binario = join(binDir, process.platform === 'win32' ? 'grafos.exe' : 'grafos');
 
 mkdirSync(binDir, { recursive: true });
-const compilacao = spawnSync('gcc', ['-std=c99', '-Wall', '-O0', '-o', binario, join(raiz, 'src', 'c-source', 'grafos.c')], {
+const compilacao = spawnSync('gcc', ['-std=c99', '-Wall', '-O0', '-o', binario, join(raiz, 'src', 'c-source', 'grafos-geral.c')], {
   encoding: 'utf8',
 });
 if (compilacao.status !== 0) {

@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O app não interpreta C. Cada função de `grafos.c` foi **reimplementada em TypeScript com o mesmo nome e a mesma lógica**, instrumentada com chamadas a um `Recorder`. Executar o programa produz um **trace**: um vetor imutável de passos, cada um com a linha do C, a pilha de chamadas, o estado do grafo e o que destacar. A interface é apenas um *player* que percorre esse vetor.
+O app não interpreta C. Cada função de `grafos-geral.c` foi **reimplementada em TypeScript com o mesmo nome e a mesma lógica**, instrumentada com chamadas a um `Recorder`. Executar o programa produz um **trace**: um vetor imutável de passos, cada um com a linha do C, a pilha de chamadas, o estado do grafo e o que destacar. A interface é apenas um *player* que percorre esse vetor.
 
 ```mermaid
 flowchart LR
@@ -16,12 +16,12 @@ flowchart LR
   end
   subgraph Engine["Engine (TypeScript puro, sem React)"]
     BT[buildTrace] --> SC[Stdin / scanf]
-    BT --> M[main: entrada → transformações → classificação → cliques → liberarGrafo]
+    BT --> M[main: entrada → transformações → classificação → cliques → conectividade → liberarGrafo]
     M --> R[Recorder]
     R -->|Step[]| BT
   end
   subgraph Fonte["Código-fonte"]
-    C[grafos.c] -->|gen:source| G[grafos.generated.ts]
+    C[grafos-geral.c] -->|gen:source| G[grafos-geral.generated.ts]
     G --> L[lineOf: âncoras de linha]
   end
   GL -->|buildTrace| BT
@@ -41,8 +41,8 @@ flowchart LR
 
 ### `src/c-source`
 
-- `grafos.c` — **fonte única** do programa. É o arquivo compilado pelo gcc nos testes golden e o texto exibido no painel.
-- `grafos.generated.ts` — `C_SOURCE` gerado por `npm run gen:source`. Um teste e o CI falham se ele divergir do `.c`.
+- `grafos-geral.c` — **fonte única** do programa. É o arquivo compilado pelo gcc nos testes golden e o texto exibido no painel.
+- `grafos-geral.generated.ts` — `C_SOURCE` gerado por `npm run gen:source`. Um teste e o CI falham se ele divergir do `.c`.
 - `source.ts` — `lineOf(função, trecho, ocorrência)` resolve o número da linha **pelo conteúdo**, a partir da assinatura da função. Não há números de linha fixos no engine; se o `.c` for reformatado, as âncoras continuam válidas, e se um trecho sumir o erro aparece no carregamento do módulo (e nos testes), nunca em silêncio.
 
 ### `src/engine`
@@ -53,6 +53,7 @@ flowchart LR
 | `transformacoes.ts` | `incidenciaParaAdjacencia`, `adjacenciaParaLista`, `imprimirMatriz`, `moduloTransformacoes` |
 | `classificacao.ts` | `dfs`, `contarAlcancados`, `ehCompleto`, `ehCiclo`, `ehRoda`, `verificarEuleriano`, `colorir`, `verificarBipartido`, `moduloClassificacao` |
 | `cliques.ts` | `imprimirClique`, `detectarTriangulos`, `detectarCliquesVizinhanca`, `moduloCliques` |
+| `conectividade.ts` | `moduloConectividade` (potências da adjacência, teto `LIMITE`, veredito de conexidade) |
 | `programa.ts` | `main`, `liberarGrafo`; `executar()` e `buildTrace()` |
 | `scanf.ts` | Semântica de `scanf("%d")` sobre o texto de entrada |
 | `recorder.ts` | Gravação de passos, pilha, stdout e estado imutável |
@@ -69,7 +70,7 @@ flowchart LR
 Step = {
   linha, modulo, nivel,   // onde estamos e com que granularidade
   pilha: Frame[],         // funções ativas e variáveis locais
-  estado: EstadoGrafo,    // espelho imutável de struct Grafo + visitado[]/cor[]
+  estado: EstadoGrafo,    // espelho imutável de struct Grafo + visitado[]/cor[] + matrizes da conectividade
   destaque: Destaque,     // vértices, arestas, células e nó da lista em foco
   stdoutFim,              // índice no stdout completo (não copia texto)
   nota,                   // explicação em português
@@ -78,7 +79,7 @@ Step = {
 
 - **Imutabilidade com compartilhamento estrutural**: `Recorder.mutar` substitui só o trecho alterado (`comCelula` copia uma linha da matriz; as demais são compartilhadas). Cada passo guarda referências, então passos antigos nunca mudam e o custo de memória por passo é pequeno.
 - **Níveis de detalhe**: 1 = chamadas/retornos/resultados, 2 = iterações externas e mutações, 3 = toda linha. O `Recorder` descarta passos acima do nível pedido; o estado continua sendo atualizado, então o próximo passo gravado já reflete as mutações.
-- **Teto de passos** (`MAX_PASSOS = 75.000`): `buildTrace` tenta nível 3; se estourar, regrava em 2 e depois em 1. Ex.: K20 gera ~210 mil passos no nível 3 e ~20 mil no nível 2. A UI avisa quando o detalhe foi reduzido.
+- **Teto de passos** (`MAX_PASSOS = 75.000`): `buildTrace` tenta nível 3; se estourar, regrava em 2 e depois em 1. Ex.: K20 gera ~384 mil passos no nível 3 e ~28 mil no nível 2. O módulo de conectividade domina a conta — multiplica matrizes n×n até n−2 vezes, O(n⁴) linhas —, então grafos de até 14–15 vértices rodam com toda linha e os maiores caem para o nível de iterações. A UI avisa quando o detalhe foi reduzido.
 - **Resultados**: `estado.resultados` guarda o que o programa já imprimiu (classificações, centro da roda, partições, triângulos, cliques). Não é estado do C — existe para a visualização destacar características já concluídas.
 
 ### `src/hooks`
@@ -131,7 +132,7 @@ A fonte é carregada por `next/font` (Archivo servida junto com o site, sem requ
 
 ### Verificação automática
 
-`npm run golden` compila `grafos.c` com `gcc -std=c99 -Wall` e executa 72 entradas: todos os exemplos, casos-limite de `scanf` (`"3abc"`, EOF, sinais, tokens extras), todos os erros de validação, Petersen, K20 e 40 grafos aleatórios com semente fixa. O resultado fica em `tests/golden/casos.json` (commitado; o CI não precisa de gcc). O teste `golden.test.ts` exige **stdout idêntico byte a byte** e o mesmo código de saída, com e sem gravação de passos.
+`npm run golden` compila `grafos-geral.c` com `gcc -std=c99 -Wall` e executa 72 entradas: todos os exemplos, casos-limite de `scanf` (`"3abc"`, EOF, sinais, tokens extras), todos os erros de validação, Petersen, K20 e 40 grafos aleatórios com semente fixa. O resultado fica em `tests/golden/casos.json` (commitado; o CI não precisa de gcc). O teste `golden.test.ts` exige **stdout idêntico byte a byte** e o mesmo código de saída, com e sem gravação de passos.
 
 ### Comportamentos do C preservados
 
@@ -175,7 +176,7 @@ Cobertura mínima de 80% (statements, branches, functions, lines) configurada em
 
 ## Como alterar o programa C
 
-1. Edite `src/c-source/grafos.c`.
+1. Edite `src/c-source/grafos-geral.c`.
 2. `npm run gen:source` para atualizar o código exibido.
 3. Ajuste a função correspondente no engine; se um trecho usado por `lineOf` mudou, o teste aponta qual.
 4. `npm run golden` (requer gcc) para regravar as saídas esperadas.

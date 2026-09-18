@@ -24,10 +24,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Código C exibido sincronizado com grafos.c
+      - name: Código C exibido sincronizado com grafos-geral.c
         run: |
           npm run gen:source
-          git diff --exit-code src/c-source/grafos.generated.ts
+          git diff --exit-code src/c-source/grafos-geral.generated.ts
 
       - run: npm run lint
       - run: npm run typecheck

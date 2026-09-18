@@ -1,5 +1,5 @@
 /** Módulos do programa, na ordem em que main() os chama. */
-export type Modulo = 'entrada' | 'transformacoes' | 'classificacao' | 'cliques' | 'fim';
+export type Modulo = 'entrada' | 'transformacoes' | 'classificacao' | 'cliques' | 'conectividade' | 'fim';
 
 /**
  * Granularidade do passo:
@@ -36,6 +36,21 @@ export interface Resultados {
   readonly bipartido?: { readonly X: readonly number[]; readonly Y: readonly number[] } | false;
   readonly triangulos: ReadonlyArray<readonly [number, number, number]>;
   readonly cliques: readonly Clique[];
+  readonly conexo?: boolean;
+  /** S = A + A² + … + Aⁿ⁻¹ ao fim do módulo de conectividade. */
+  readonly somaCaminhos?: Matriz;
+}
+
+/**
+ * Matrizes locais de moduloConectividade enquanto a função está na pilha.
+ * `proxima` começa com lixo de memória (null) e guarda o produto anterior entre as rodadas.
+ */
+export interface EstadoConectividade {
+  /** Potência já contida em `potencia`: Aʳ. */
+  readonly r: number;
+  readonly potencia: Matriz;
+  readonly proxima: ReadonlyArray<ReadonlyArray<number | null>>;
+  readonly soma: Matriz;
 }
 
 /**
@@ -53,9 +68,12 @@ export interface EstadoGrafo {
   readonly grau: ReadonlyArray<number | null> | null;
   readonly visitado: readonly boolean[] | null;
   readonly cor: readonly number[] | null;
+  readonly conectividade: EstadoConectividade | null;
   readonly liberado: boolean;
   readonly resultados: Resultados;
 }
+
+export type MatrizDestacavel = 'incidencia' | 'adjacencia' | 'potencia' | 'proxima' | 'soma';
 
 export type TipoDestaque = 'atual' | 'comparado' | 'sucesso' | 'falha';
 
@@ -63,7 +81,7 @@ export interface Destaque {
   readonly vertices?: ReadonlyArray<{ readonly id: number; readonly tipo: TipoDestaque }>;
   readonly arestas?: ReadonlyArray<{ readonly u: number; readonly w: number; readonly tipo: TipoDestaque }>;
   readonly celulas?: ReadonlyArray<{
-    readonly matriz: 'incidencia' | 'adjacencia';
+    readonly matriz: MatrizDestacavel;
     readonly i: number;
     readonly j: number;
     readonly tipo: TipoDestaque;
@@ -75,7 +93,7 @@ export interface Destaque {
 }
 
 export interface Step {
-  /** Linha (1-based) de grafos.c em execução. */
+  /** Linha (1-based) de grafos-geral.c em execução. */
   readonly linha: number;
   readonly modulo: Modulo;
   readonly nivel: Nivel;

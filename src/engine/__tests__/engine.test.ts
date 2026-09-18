@@ -26,8 +26,8 @@ function ultimoEstado(trace: Trace): EstadoGrafo {
 }
 
 describe('código-fonte C', () => {
-  it('grafos.generated.ts está sincronizado com grafos.c', () => {
-    const arquivo = readFileSync(join(process.cwd(), 'src', 'c-source', 'grafos.c'), 'utf8').replace(/\r\n/g, '\n');
+  it('grafos-geral.generated.ts está sincronizado com grafos-geral.c', () => {
+    const arquivo = readFileSync(join(process.cwd(), 'src', 'c-source', 'grafos-geral.c'), 'utf8').replace(/\r\n/g, '\n');
     expect(C_SOURCE).toBe(arquivo);
   });
 
@@ -123,7 +123,7 @@ describe('buildTrace', () => {
     const resultado = buildTrace(exemplo('roda-w5'));
     if (!resultado.ok) throw new Error(resultado.erro);
     const ordem = resultado.trace.passos.map((p) => p.modulo).filter((m, i, todos) => m !== todos[i - 1]);
-    expect(ordem).toEqual(['entrada', 'transformacoes', 'classificacao', 'cliques', 'fim']);
+    expect(ordem).toEqual(['entrada', 'transformacoes', 'classificacao', 'cliques', 'conectividade', 'fim']);
     expect(resultado.trace.exitCode).toBe(0);
     expect(resultado.trace.nivelGravado).toBe(3);
   });
@@ -286,5 +286,50 @@ describe('grafoVisual', () => {
     const estado: EstadoGrafo = { ...base, v: 2, e: 1, incidencia: [[1], [1]], adjacencia: [[0, 1], [1, 0]] };
     expect(arestasVisiveis(estado)).toEqual([{ chave: '0-1', u: 0, w: 1, origem: 'adjacencia', colunas: [0] }]);
     expect(chaveAresta(5, 2)).toBe('2-5');
+  });
+});
+
+describe('moduloConectividade', () => {
+  function completo(v: number): EntradaPrograma {
+    const arestas: [number, number][] = [];
+    for (let i = 0; i < v; i++) for (let j = i + 1; j < v; j++) arestas.push([i, j]);
+    return { vertices: String(v), arestas: String(arestas.length), matriz: matrizDeArestas(v, arestas) };
+  }
+
+  it('soma as potências da adjacência e conclui se o grafo é conexo', () => {
+    const conexo = buildTrace(exemplo('ciclo-c5'));
+    const separado = buildTrace(exemplo('desconexo'));
+    if (!conexo.ok || !separado.ok) throw new Error('falha inesperada');
+
+    // C5: S[0][1] = caminhos de comprimento 1 a 4 entre vizinhos = 1 + 0 + 3 + 1 (a volta 0–4–3–2–1).
+    expect(ultimoEstado(conexo.trace).resultados).toMatchObject({ conexo: true });
+    expect(ultimoEstado(conexo.trace).resultados.somaCaminhos?.[0]?.[1]).toBe(5);
+    expect(ultimoEstado(separado.trace).resultados.conexo).toBe(false);
+    expect(ultimoEstado(separado.trace).resultados.somaCaminhos?.[0]?.[2]).toBe(0);
+  });
+
+  it('mantém as matrizes locais só enquanto a função está na pilha', () => {
+    const resultado = buildTrace(exemplo('roda-w5'));
+    if (!resultado.ok) throw new Error(resultado.erro);
+    const dentro = resultado.trace.passos.filter((p) => p.pilha.at(-1)?.fn === 'moduloConectividade');
+    const multiplicando = dentro.find((p) => p.estado.conectividade?.r === 2);
+    expect(multiplicando?.estado.conectividade?.potencia[0]?.[1]).toBeGreaterThan(0);
+    // proxima começa com lixo de memória (null) antes do primeiro produto.
+    const primeiro = dentro.find((p) => p.estado.conectividade !== null);
+    expect(primeiro?.estado.conectividade?.proxima[0]?.[0]).toBeNull();
+    expect(ultimoEstado(resultado.trace).conectividade).toBeNull();
+  });
+
+  it('limita as contagens de caminhos em grafos densos, como o #define LIMITE do C', () => {
+    const trace = executar(paraStdin(completo(12)), 3);
+    expect(trace.passos.some((p) => p.nota.includes('passou do LIMITE'))).toBe(true);
+    expect(trace.stdout).toContain('Conexo: Sim');
+  });
+
+  it('com um único vértice não multiplica nada e considera o grafo conexo', () => {
+    const trace = executar(paraStdin({ vertices: '1', arestas: '0', matriz: '' }), 3);
+    expect(trace.stdout).toContain('S = A + A^2 + ... + A^0:');
+    expect(trace.passos.some((p) => p.nota.startsWith('r = '))).toBe(false);
+    expect(ultimoEstado(trace).resultados.conexo).toBe(true);
   });
 });

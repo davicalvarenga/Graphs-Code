@@ -21,6 +21,7 @@ export const NOME_MODULO: Record<Modulo, string> = {
   transformacoes: 'transformações',
   classificacao: 'classificação',
   cliques: 'cliques',
+  conectividade: 'conectividade',
   fim: 'encerramento',
 };
 
