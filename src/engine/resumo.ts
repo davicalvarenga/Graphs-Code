@@ -20,6 +20,9 @@ export function resumoFinal(estado: EstadoGrafo): string {
 
   partes.push(classificacoes.length > 0 ? `É ${classificacoes.join(', ')}.` : 'Não é completo, ciclo, roda, euleriano nem bipartido.');
   partes.push(`${resultados.triangulos.length} triângulo(s) e ${resultados.cliques.length} clique(s) {u} ∪ N(u).`);
+  if (resultados.maiorClique !== undefined) {
+    partes.push(`Maior clique: tamanho ${resultados.maiorClique}.`);
+  }
   if (resultados.conexo !== undefined) {
     partes.push(resultados.conexo ? 'Conexo: há caminho entre todo par de vértices.' : 'Não conexo: há vértices sem caminho entre si.');
   }

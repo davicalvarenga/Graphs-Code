@@ -1,17 +1,16 @@
 'use client';
 
 import { useId, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { potenciaDeA } from '@/engine/conectividade';
 import type { Destaque, EstadoGrafo, Frame, MatrizDestacavel, TipoDestaque } from '@/engine/types';
 
-export type Aba = 'incidencia' | 'adjacencia' | 'lista' | 'graus' | 'conectividade' | 'resultados' | 'saida';
+export type Aba = 'incidencia' | 'adjacencia' | 'lista' | 'graus' | 'matrizes' | 'resultados' | 'saida';
 
 const ABAS: ReadonlyArray<{ id: Aba; rotulo: string }> = [
   { id: 'incidencia', rotulo: 'incidência' },
   { id: 'adjacencia', rotulo: 'adjacência' },
   { id: 'lista', rotulo: 'lista' },
   { id: 'graus', rotulo: 'graus' },
-  { id: 'conectividade', rotulo: 'conectividade' },
+  { id: 'matrizes', rotulo: 'matrizes' },
   { id: 'resultados', rotulo: 'resultados' },
   { id: 'saida', rotulo: 'saída' },
 ];
@@ -34,11 +33,18 @@ const ABA_POR_FUNCAO: Readonly<Record<string, Aba>> = {
   dfs: 'resultados',
   verificarBipartido: 'resultados',
   colorir: 'resultados',
-  moduloCliques: 'resultados',
-  detectarTriangulos: 'adjacencia',
-  detectarCliquesVizinhanca: 'adjacencia',
   imprimirClique: 'resultados',
-  moduloConectividade: 'conectividade',
+  moduloConectividade: 'matrizes',
+  moduloCliques: 'matrizes',
+  copiarAdjacencia: 'matrizes',
+  multiplicar: 'matrizes',
+  imprimirQuadrada: 'matrizes',
+  detectarTriangulos: 'matrizes',
+  detectarCliquesVizinhanca: 'matrizes',
+  acharTriangulo: 'matrizes',
+  buscarClique: 'resultados',
+  verificarClique: 'resultados',
+  verificarTamanhosClique: 'resultados',
   liberarGrafo: 'saida',
   main: 'saida',
 };
@@ -158,9 +164,20 @@ function Resultados({ estado }: { estado: EstadoGrafo }) {
       {estado.cor ? <VetorAuxiliar titulo="cor[] (bipartição)" valores={estado.cor} formatar={(c) => (c === -1 ? '-1' : c === 0 ? 'X' : 'Y')} /> : null}
 
       <div>
-        <h4 className="text-[11px] uppercase tracking-[0.12em] text-neutral-700">Triângulos (K₃): {r.triangulos.length}</h4>
+        <h4 className="text-[11px] uppercase tracking-[0.12em] text-neutral-700">
+          Triângulos (K₃): {r.triangulos.length}
+          {r.tracoA3 !== undefined ? <span className="font-normal"> · traço(A³) = {r.tracoA3}</span> : null}
+        </h4>
         <p className="mt-1 font-mono text-[13px]">{r.triangulos.map((t) => `{${t.join(' ')}}`).join('  ') || '—'}</p>
       </div>
+      {r.cliquesPorTamanho ? (
+        <div>
+          <h4 className="text-[11px] uppercase tracking-[0.12em] text-neutral-700">Busca por tamanho · maior clique: {r.maiorClique ?? "—"}</h4>
+          <p className="mt-1 font-mono text-[13px]">
+            {r.cliquesPorTamanho.map((item) => `k=${item.k} ${item.membros ? `{${item.membros.join(' ')}}` : 'não'}`).join('  ')}
+          </p>
+        </div>
+      ) : null}
       <div>
         <h4 className="text-[11px] uppercase tracking-[0.12em] text-neutral-700">Cliques {'{u} ∪ N(u)'}: {r.cliques.length}</h4>
         <p className="mt-1 font-mono text-[13px]">{r.cliques.map((c) => `{${c.membros.join(' ')}} tamanho ${c.tamanho}`).join('  ') || '—'}</p>
@@ -169,32 +186,33 @@ function Resultados({ estado }: { estado: EstadoGrafo }) {
   );
 }
 
-/** Matrizes locais de moduloConectividade enquanto executa; depois, só o S final. */
-function Conectividade({ estado, destaque }: { estado: EstadoGrafo; destaque: Destaque }) {
-  const c = estado.conectividade;
+/** Matrizes locais vivas na pilha do C; quando nenhuma existe, o S final da conectividade. */
+function Matrizes({ estado, destaque }: { estado: EstadoGrafo; destaque: Destaque }) {
   const { somaCaminhos, conexo } = estado.resultados;
-  if (!c) {
-    return somaCaminhos ? (
+  if (estado.matrizes && estado.matrizes.length > 0) {
+    return (
+      <div className="space-y-4">
+        {estado.matrizes.map((matriz) => (
+          <div key={matriz.nome} className="space-y-1">
+            <Rotulo>{matriz.rotulo}</Rotulo>
+            <TabelaMatriz titulo={matriz.nome} prefixoColuna="v" linhas={matriz.celulas} destaques={celulasDe(destaque, matriz.nome)} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (somaCaminhos) {
+    return (
       <div className="space-y-3">
+        <Rotulo>S = A + A² + … + Aⁿ⁻¹</Rotulo>
         <TabelaMatriz titulo="S = A + A² + … + Aⁿ⁻¹" prefixoColuna="v" linhas={somaCaminhos} destaques={new Map()} />
         <p className="text-sm">
           Conexo: <span className={conexo ? 'font-bold text-acento-700' : 'text-neutral-700'}>{conexo ? 'Sim' : 'Não'}</span>
         </p>
       </div>
-    ) : (
-      <Vazio>O módulo de conectividade ainda não foi executado.</Vazio>
     );
   }
-  return (
-    <div className="space-y-4">
-      <Rotulo>potencia · {potenciaDeA(c.r)}</Rotulo>
-      <TabelaMatriz titulo="potencia" prefixoColuna="v" linhas={c.potencia} destaques={celulasDe(destaque, 'potencia')} />
-      <Rotulo>proxima · {potenciaDeA(c.r + 1)} em construção</Rotulo>
-      <TabelaMatriz titulo="proxima" prefixoColuna="v" linhas={c.proxima} destaques={celulasDe(destaque, 'proxima')} />
-      <Rotulo>soma · S = A + … + {potenciaDeA(c.r)}</Rotulo>
-      <TabelaMatriz titulo="soma" prefixoColuna="v" linhas={c.soma} destaques={celulasDe(destaque, 'soma')} />
-    </div>
-  );
+  return <Vazio>Nenhuma matriz local viva: os módulos de cliques e conectividade ainda não rodaram.</Vazio>;
 }
 
 function Rotulo({ children }: { children: ReactNode }) {
@@ -285,8 +303,8 @@ export function DataPanel({ estado, destaque, pilha, saida }: DataPanelProps) {
         <Vazio>O vetor de graus ainda não foi alocado.</Vazio>
       );
       break;
-    case 'conectividade':
-      conteudo = <Conectividade estado={estado} destaque={destaque} />;
+    case 'matrizes':
+      conteudo = <Matrizes estado={estado} destaque={destaque} />;
       break;
     case 'resultados':
       conteudo = <Resultados estado={estado} />;

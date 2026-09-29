@@ -11,7 +11,7 @@ export const ESTADO_INICIAL: EstadoGrafo = {
   grau: null,
   visitado: null,
   cor: null,
-  conectividade: null,
+  matrizes: null,
   liberado: false,
   resultados: { triangulos: [], cliques: [] },
 };

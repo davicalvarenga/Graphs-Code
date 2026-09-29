@@ -65,7 +65,7 @@ void imprimirMatriz (int linhas, int colunas, int **matriz, char rotulo) {
     }
 }
 
-// ===================== Entrada e Validação =====================
+// Entrada e Validação 
 
 bool validarColunas (struct Grafo *g) {
     for (int aresta = 0; aresta < g->e; aresta++) {
@@ -136,7 +136,7 @@ bool moduloEntrada (struct Grafo *g) {
     return true;
 }
 
-// ===================== Transformações =====================
+// Transformações 
 
 void incidenciaParaAdjacencia (struct Grafo *g) {
     for (int aresta = 0; aresta < g->e; aresta++) {
@@ -189,7 +189,7 @@ void moduloTransformacoes (struct Grafo *g) {
     }
 }
 
-// ===================== Classificação =====================
+// Classificação 
 
 int dfs (struct Grafo *g, int u, bool visitado[], int ignorar) {
     int cont = 1;
@@ -334,7 +334,48 @@ void moduloClassificacao (struct Grafo *g) {
     verificarBipartido(g);
 }
 
-// ===================== Cliques =====================
+//  Operações com matrizes 
+
+#define LIMITE 1000000
+
+void copiarAdjacencia (struct Grafo *g, int n, int a[n][n]) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            a[i][j] = g->adjacencia[i][j];
+        }
+    }
+}
+
+void multiplicar (int n, int a[n][n], int b[n][n], int c[n][n]) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            c[i][j] = 0;
+            for (int k = 0; k < n; k++) {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+            if(c[i][j] > LIMITE) {
+                c[i][j] = LIMITE;
+            }
+        }
+    }
+}
+
+void imprimirQuadrada (int n, int m[n][n]) {
+    printf("    ");
+    for (int j = 0; j < n; j++) {
+        printf("v%-3d", j);
+    }
+    printf("\n");
+    for (int i = 0; i < n; i++) {
+        printf("v%-3d", i);
+        for (int j = 0; j < n; j++) {
+            printf("%-4d", m[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// Cliques 
 
 void imprimirClique (int v, bool membro[], int tamanho) {
     printf("  { ");
@@ -346,130 +387,207 @@ void imprimirClique (int v, bool membro[], int tamanho) {
     printf("} tamanho %d\n", tamanho);
 }
 
-void detectarTriangulos (struct Grafo *g) {
-    int total = 0;
+void detectarTriangulos (int n, int a[n][n], int a2[n][n], int a3[n][n]) {
+    int traco = 0;
+    for (int i = 0; i < n; i++) {
+        traco += a3[i][i];
+    }
 
-    printf("Triângulos (K_3):\n");
-    for (int i = 0; i < g->v; i++) {
-        for (int j = i + 1; j < g->v; j++) {
-            if(g->adjacencia[i][j] == 0) {
+    printf("\nTriângulos (K_3):\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if(a[i][j] == 0 || a2[i][j] == 0) {
                 continue;
             }
-            for (int k = j + 1; k < g->v; k++) {
-                if(g->adjacencia[j][k] == 1 && g->adjacencia[i][k] == 1) {
+            for (int k = j + 1; k < n; k++) {
+                if(a[i][k] == 1 && a[j][k] == 1) {
                     printf("  { %d %d %d }\n", i, j, k);
-                    total++;
                 }
             }
         }
     }
-    printf("Total de triângulos: %d\n", total);
+    printf("Total de triângulos: traço(A^3) / 6 = %d / 6 = %d\n", traco, traco / 6);
 }
 
-void detectarCliquesVizinhanca (struct Grafo *g) {
-    bool encontrados[g->v][g->v];
+void detectarCliquesVizinhanca (struct Grafo *g, int n, int a2[n][n]) {
+    bool encontrados[n][n];
     int total = 0;
 
     printf("\nCliques da forma {u} U N(u):\n");
-    for (int u = 0; u < g->v; u++) {
-        bool membro[g->v];
-        for (int i = 0; i < g->v; i++) {
+    for (int u = 0; u < n; u++) {
+        bool membro[n];
+        for (int i = 0; i < n; i++) {
             membro[i] = (g->adjacencia[u][i] == 1);
         }
         membro[u] = true;
 
         bool ehClique = (g->grau[u] > 0);
-        for (struct No *a = g->listaAdjacencia[u]; a != NULL; a = a->prox) {
-            for (struct No *b = a->prox; b != NULL; b = b->prox) {
-                if(g->adjacencia[a->vertice][b->vertice] == 0) {
-                    ehClique = false;
-                }
+        for (struct No *p = g->listaAdjacencia[u]; p != NULL; p = p->prox) {
+            if(a2[u][p->vertice] != g->grau[u] - 1) {
+                ehClique = false;
             }
         }
 
         bool repetido = false;
         for (int c = 0; c < total; c++) {
             int i = 0;
-            while (i < g->v && encontrados[c][i] == membro[i]) {
+            while (i < n && encontrados[c][i] == membro[i]) {
                 i++;
             }
-            if(i == g->v) {
+            if(i == n) {
                 repetido = true;
             }
         }
 
         if(ehClique && !repetido) {
-            for (int i = 0; i < g->v; i++) {
+            for (int i = 0; i < n; i++) {
                 encontrados[total][i] = membro[i];
             }
-            imprimirClique(g->v, membro, g->grau[u] + 1);
+            imprimirClique(n, membro, g->grau[u] + 1);
             total++;
         }
     }
     printf("Total de cliques: %d\n", total);
 }
 
-void moduloCliques (struct Grafo *g) {
-    printf("\n===== CLIQUES =====\n");
-    detectarTriangulos(g);
-    detectarCliquesVizinhanca(g);
-}
-
-// ===================== Conectividade =====================
-
-// Teto para as contagens de caminhos, evita overflow em grafos densos.
-// Para saber se é conexo, só importa se o valor é zero ou positivo.
-#define LIMITE 1000000
-
-void moduloConectividade (struct Grafo *g) {
-    int n = g->v;
-    int potencia[n][n];  // A^r
-    int proxima[n][n];   // A^(r+1)
-    int soma[n][n];      // S = A + A^2 + ... + A^(n-1)
-
-    printf("\n===== CONECTIVIDADE =====\n");
-
-    // A^1 = A e S começa igual a A
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            potencia[i][j] = g->adjacencia[i][j];
-            soma[i][j] = g->adjacencia[i][j];
-        }
+bool acharTriangulo (struct Grafo *g, int vertices[], int n, int clique[]) {
+    if(n < 3) {
+        return false;
     }
 
-    // A^r = A^(r-1) x A, para r = 2 até n-1
-    for (int r = 2; r <= n - 1; r++) {
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                proxima[i][j] = 0;
-                for (int k = 0; k < n; k++) {
-                    proxima[i][j] += potencia[i][k] * g->adjacencia[k][j];
+    int a[n][n], a2[n][n], a3[n][n];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            a[i][j] = g->adjacencia[vertices[i]][vertices[j]];
+        }
+    }
+    multiplicar(n, a, a, a2);
+    multiplicar(n, a2, a, a3);
+
+    for (int i = 0; i < n; i++) {
+        if(a3[i][i] == 0) {
+            continue;
+        }
+        for (int j = 0; j < n; j++) {
+            if(a[i][j] == 0 || a2[i][j] == 0) {
+                continue;
+            }
+            for (int k = 0; k < n; k++) {
+                if(a[i][k] == 1 && a[j][k] == 1) {
+                    clique[0] = vertices[i];
+                    clique[1] = vertices[j];
+                    clique[2] = vertices[k];
+                    return true;
                 }
             }
         }
+    }
+    return false;
+}
+
+bool buscarClique (struct Grafo *g, int vertices[], int n, int k, int clique[]) {
+    if(k == 3) {
+        return acharTriangulo(g, vertices, n, clique);
+    }
+
+    for (int i = 0; i < n; i++) {
+        int u = vertices[i];
+        int vizinhos[n];
+        int m = 0;
+        for (int j = i + 1; j < n; j++) {
+            if(g->adjacencia[u][vertices[j]] == 1) {
+                vizinhos[m++] = vertices[j];
+            }
+        }
+        if(m >= k - 1 && buscarClique(g, vizinhos, m, k - 1, clique + 1)) {
+            clique[0] = u;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool verificarClique (struct Grafo *g, int k) {
+    int vertices[g->v];
+    int clique[k];
+    for (int i = 0; i < g->v; i++) {
+        vertices[i] = i;
+    }
+
+    if(!buscarClique(g, vertices, g->v, k, clique)) {
+        printf("Possui clique de tamanho %d: Não\n", k);
+        return false;
+    }
+
+    for (int i = 1; i < k; i++) {
+        for (int j = i; j > 0 && clique[j - 1] > clique[j]; j--) {
+            int aux = clique[j];
+            clique[j] = clique[j - 1];
+            clique[j - 1] = aux;
+        }
+    }
+    printf("Possui clique de tamanho %d: Sim { ", k);
+    for (int i = 0; i < k; i++) {
+        printf("%d ", clique[i]);
+    }
+    printf("}\n");
+    return true;
+}
+
+void verificarTamanhosClique (struct Grafo *g) {
+    int maior = (g->e > 0) ? 2 : 1;
+
+    printf("\n");
+    for (int k = 3; verificarClique(g, k); k++) {
+        maior = k;
+    }
+    printf("Maior clique: tamanho %d\n", maior);
+}
+
+void moduloCliques (struct Grafo *g) {
+    int n = g->v;
+    int a[n][n], a2[n][n], a3[n][n];
+
+    printf("\n===== CLIQUES =====\n");
+    copiarAdjacencia(g, n, a);
+    multiplicar(n, a, a, a2);
+    multiplicar(n, a2, a, a3);
+
+    printf("A^2 (vizinhos em comum):\n");
+    imprimirQuadrada(n, a2);
+    printf("\nA^3 (diagonal = 2 x triângulos do vértice):\n");
+    imprimirQuadrada(n, a3);
+
+    detectarTriangulos(n, a, a2, a3);
+    detectarCliquesVizinhanca(g, n, a2);
+    verificarTamanhosClique(g);
+}
+
+// Conectividade 
+
+void moduloConectividade (struct Grafo *g) {
+    int n = g->v;
+    int a[n][n], potencia[n][n], proxima[n][n], soma[n][n];
+
+    printf("\n===== CONECTIVIDADE =====\n");
+
+    copiarAdjacencia(g, n, a);
+    copiarAdjacencia(g, n, potencia);
+    copiarAdjacencia(g, n, soma);
+
+    for (int r = 2; r <= n - 1; r++) {
+        multiplicar(n, potencia, a, proxima);
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                potencia[i][j] = (proxima[i][j] > LIMITE) ? LIMITE : proxima[i][j];
+                potencia[i][j] = proxima[i][j];
                 soma[i][j] += potencia[i][j];
             }
         }
     }
 
     printf("S = A + A^2 + ... + A^%d:\n", n - 1);
-    printf("    ");
-    for (int j = 0; j < n; j++) {
-        printf("v%-3d", j);
-    }
-    printf("\n");
-    for (int i = 0; i < n; i++) {
-        printf("v%-3d", i);
-        for (int j = 0; j < n; j++) {
-            printf("%-4d", soma[i][j]);
-        }
-        printf("\n");
-    }
+    imprimirQuadrada(n, soma);
 
-    // Conexo se existe caminho entre todo par de vértices distintos
     bool conexo = true;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -480,6 +598,8 @@ void moduloConectividade (struct Grafo *g) {
     }
     printf("\nConexo: %s\n", conexo ? "Sim" : "Não");
 }
+
+// Main
 
 int main () {
     struct Grafo g = {0};

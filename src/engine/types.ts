@@ -37,20 +37,24 @@ export interface Resultados {
   readonly triangulos: ReadonlyArray<readonly [number, number, number]>;
   readonly cliques: readonly Clique[];
   readonly conexo?: boolean;
+  /** traço(A³) = 6 × número de triângulos. */
+  readonly tracoA3?: number;
+  /** Busca por tamanho: membros do clique encontrado, ou null quando não existe. */
+  readonly cliquesPorTamanho?: ReadonlyArray<{ readonly k: number; readonly membros: readonly number[] | null }>;
+  readonly maiorClique?: number;
   /** S = A + A² + … + Aⁿ⁻¹ ao fim do módulo de conectividade. */
   readonly somaCaminhos?: Matriz;
 }
 
 /**
- * Matrizes locais de moduloConectividade enquanto a função está na pilha.
- * `proxima` começa com lixo de memória (null) e guarda o produto anterior entre as rodadas.
+ * Matriz local viva na pilha do C (A², A³, potencia, proxima, soma…).
+ * Célula null = posição ainda com lixo de memória.
  */
-export interface EstadoConectividade {
-  /** Potência já contida em `potencia`: Aʳ. */
-  readonly r: number;
-  readonly potencia: Matriz;
-  readonly proxima: ReadonlyArray<ReadonlyArray<number | null>>;
-  readonly soma: Matriz;
+export interface MatrizViva {
+  readonly nome: string;
+  /** Como aparece no painel: "A² · vizinhos em comum". */
+  readonly rotulo: string;
+  readonly celulas: ReadonlyArray<ReadonlyArray<number | null>>;
 }
 
 /**
@@ -68,12 +72,14 @@ export interface EstadoGrafo {
   readonly grau: ReadonlyArray<number | null> | null;
   readonly visitado: readonly boolean[] | null;
   readonly cor: readonly number[] | null;
-  readonly conectividade: EstadoConectividade | null;
+  /** Matrizes locais das funções em execução; null quando nenhuma está viva. */
+  readonly matrizes: readonly MatrizViva[] | null;
   readonly liberado: boolean;
   readonly resultados: Resultados;
 }
 
-export type MatrizDestacavel = 'incidencia' | 'adjacencia' | 'potencia' | 'proxima' | 'soma';
+/** Nome da matriz destacada: 'incidencia', 'adjacencia' ou o nome de uma matriz local viva. */
+export type MatrizDestacavel = string;
 
 export type TipoDestaque = 'atual' | 'comparado' | 'sucesso' | 'falha';
 

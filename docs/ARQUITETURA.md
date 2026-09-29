@@ -52,8 +52,9 @@ flowchart LR
 | `entrada.ts` | `criarGrafo`, `validarColunas`, `validarParalelas`, `moduloEntrada` |
 | `transformacoes.ts` | `incidenciaParaAdjacencia`, `adjacenciaParaLista`, `imprimirMatriz`, `moduloTransformacoes` |
 | `classificacao.ts` | `dfs`, `contarAlcancados`, `ehCompleto`, `ehCiclo`, `ehRoda`, `verificarEuleriano`, `colorir`, `verificarBipartido`, `moduloClassificacao` |
-| `cliques.ts` | `imprimirClique`, `detectarTriangulos`, `detectarCliquesVizinhanca`, `moduloCliques` |
-| `conectividade.ts` | `moduloConectividade` (potências da adjacência, teto `LIMITE`, veredito de conexidade) |
+| `cliques.ts` | `imprimirClique`, `detectarTriangulos` (traço de A³), `detectarCliquesVizinhanca` (teste por A²), `acharTriangulo`, `buscarClique`, `verificarClique`, `verificarTamanhosClique`, `moduloCliques` |
+| `matrizes.ts` | `copiarAdjacencia`, `multiplicar` (com o teto `LIMITE`), `imprimirQuadrada` — compartilhadas pelos módulos de cliques e conectividade |
+| `conectividade.ts` | `moduloConectividade` (S = A + A² + … + Aⁿ⁻¹ e o veredito de conexidade) |
 | `programa.ts` | `main`, `liberarGrafo`; `executar()` e `buildTrace()` |
 | `scanf.ts` | Semântica de `scanf("%d")` sobre o texto de entrada |
 | `recorder.ts` | Gravação de passos, pilha, stdout e estado imutável |
@@ -70,7 +71,7 @@ flowchart LR
 Step = {
   linha, modulo, nivel,   // onde estamos e com que granularidade
   pilha: Frame[],         // funções ativas e variáveis locais
-  estado: EstadoGrafo,    // espelho imutável de struct Grafo + visitado[]/cor[] + matrizes da conectividade
+  estado: EstadoGrafo,    // espelho imutável de struct Grafo + visitado[]/cor[] + matrizes locais vivas
   destaque: Destaque,     // vértices, arestas, células e nó da lista em foco
   stdoutFim,              // índice no stdout completo (não copia texto)
   nota,                   // explicação em português
@@ -79,7 +80,7 @@ Step = {
 
 - **Imutabilidade com compartilhamento estrutural**: `Recorder.mutar` substitui só o trecho alterado (`comCelula` copia uma linha da matriz; as demais são compartilhadas). Cada passo guarda referências, então passos antigos nunca mudam e o custo de memória por passo é pequeno.
 - **Níveis de detalhe**: 1 = chamadas/retornos/resultados, 2 = iterações externas e mutações, 3 = toda linha. O `Recorder` descarta passos acima do nível pedido; o estado continua sendo atualizado, então o próximo passo gravado já reflete as mutações.
-- **Teto de passos** (`MAX_PASSOS = 75.000`): `buildTrace` tenta nível 3; se estourar, regrava em 2 e depois em 1. Ex.: K20 gera ~384 mil passos no nível 3 e ~28 mil no nível 2. O módulo de conectividade domina a conta — multiplica matrizes n×n até n−2 vezes, O(n⁴) linhas —, então grafos de até 14–15 vértices rodam com toda linha e os maiores caem para o nível de iterações. A UI avisa quando o detalhe foi reduzido.
+- **Teto de passos** (`MAX_PASSOS = 75.000`): `buildTrace` tenta nível 3; se estourar, regrava em 2 e depois em 1. Ex.: K20 gera ~41 mil passos no nível 2. As multiplicações de matrizes dominam a conta — O(n³) linhas por produto, e o programa faz n−2 produtos na conectividade mais dois nos cliques —, então grafos de até 12–13 vértices rodam com toda linha e os maiores caem para o nível de iterações, em que cada célula concluída ainda aparece. A UI avisa quando o detalhe foi reduzido.
 - **Resultados**: `estado.resultados` guarda o que o programa já imprimiu (classificações, centro da roda, partições, triângulos, cliques). Não é estado do C — existe para a visualização destacar características já concluídas.
 
 ### `src/hooks`

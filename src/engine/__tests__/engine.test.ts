@@ -311,13 +311,13 @@ describe('moduloConectividade', () => {
   it('mantém as matrizes locais só enquanto a função está na pilha', () => {
     const resultado = buildTrace(exemplo('roda-w5'));
     if (!resultado.ok) throw new Error(resultado.erro);
-    const dentro = resultado.trace.passos.filter((p) => p.pilha.at(-1)?.fn === 'moduloConectividade');
-    const multiplicando = dentro.find((p) => p.estado.conectividade?.r === 2);
-    expect(multiplicando?.estado.conectividade?.potencia[0]?.[1]).toBeGreaterThan(0);
-    // proxima começa com lixo de memória (null) antes do primeiro produto.
-    const primeiro = dentro.find((p) => p.estado.conectividade !== null);
-    expect(primeiro?.estado.conectividade?.proxima[0]?.[0]).toBeNull();
-    expect(ultimoEstado(resultado.trace).conectividade).toBeNull();
+    const dentro = resultado.trace.passos.filter((p) => p.pilha.some((f) => f.fn === 'moduloConectividade'));
+    const multiplicando = dentro.find((p) => p.estado.matrizes?.some((m) => m.nome === 'proxima'));
+    expect(multiplicando?.estado.matrizes?.map((m) => m.nome)).toEqual(expect.arrayContaining(['a', 'potencia', 'soma', 'proxima']));
+    // As células começam com lixo de memória até o primeiro produto.
+    const declarada = dentro.find((p) => p.estado.matrizes?.some((m) => m.nome === 'proxima' && m.celulas[0]?.[0] === null));
+    expect(declarada).toBeDefined();
+    expect(ultimoEstado(resultado.trace).matrizes).toBeNull();
   });
 
   it('limita as contagens de caminhos em grafos densos, como o #define LIMITE do C', () => {
@@ -331,5 +331,49 @@ describe('moduloConectividade', () => {
     expect(trace.stdout).toContain('S = A + A^2 + ... + A^0:');
     expect(trace.passos.some((p) => p.nota.startsWith('r = '))).toBe(false);
     expect(ultimoEstado(trace).resultados.conexo).toBe(true);
+  });
+});
+
+describe('moduloCliques com potências da adjacência', () => {
+  it('conta triângulos pelo traço de A³ e acha o maior clique', () => {
+    const k4 = buildTrace(exemplo('completo-k4'));
+    if (!k4.ok) throw new Error(k4.erro);
+    const r = ultimoEstado(k4.trace).resultados;
+
+    // K4 tem 4 triângulos: traço(A³) = 6 × 4.
+    expect(r.tracoA3).toBe(24);
+    expect(r.triangulos).toHaveLength(4);
+    expect(r.maiorClique).toBe(4);
+    expect(r.cliquesPorTamanho).toEqual([
+      { k: 3, membros: [0, 1, 2] },
+      { k: 4, membros: [0, 1, 2, 3] },
+      { k: 5, membros: null },
+    ]);
+    expect(k4.trace.stdout).toContain('Total de triângulos: traço(A^3) / 6 = 24 / 6 = 4');
+    expect(k4.trace.stdout).toContain('Maior clique: tamanho 4');
+  });
+
+  it('sem arestas, o maior clique é 1 e não há busca bem-sucedida', () => {
+    const trace = executar(paraStdin({ vertices: '3', arestas: '0', matriz: '' }), 3);
+    expect(ultimoEstado(trace).resultados.maiorClique).toBe(1);
+    expect(trace.stdout).toContain('Possui clique de tamanho 3: Não');
+    expect(trace.stdout).toContain('Maior clique: tamanho 1');
+  });
+
+  it('com arestas mas sem triângulo, o maior clique é 2', () => {
+    const trace = executar(paraStdin(exemplo('caminho-p4')), 2);
+    expect(ultimoEstado(trace).resultados.maiorClique).toBe(2);
+    expect(ultimoEstado(trace).resultados.tracoA3).toBe(0);
+  });
+
+  it('a busca por tamanho olha submatrizes dos vizinhos', () => {
+    const trace = executar(paraStdin(exemplo('completo-k4')), 3);
+    const busca = trace.passos.filter((p) => p.pilha.some((f) => f.fn === 'buscarClique'));
+    expect(busca.length).toBeGreaterThan(0);
+    // acharTriangulo monta a submatriz do subconjunto e eleva ao cubo.
+    const submatriz = busca.find((p) => p.estado.matrizes?.some((m) => m.nome.startsWith('sub3')));
+    expect(submatriz).toBeDefined();
+    // As submatrizes são locais: somem quando a recursão retorna.
+    expect(ultimoEstado(trace).matrizes).toBeNull();
   });
 });
